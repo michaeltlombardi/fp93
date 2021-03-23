@@ -1,0 +1,21 @@
+The rules for FloppyPunk are built on top of the HexHack system and use two six sided dice for resolution.
+
+["adjudication"]Adjudication
+
+[purple::b]Intent:[-:-:-] What does the player want?
+[purple::b]Approach:[-:-:-] How does their character try to get it?
+[purple::b]Adjudicate:[-:-:-] Only after the player answers both questions, the Adjudicator should answer, for themself:
+
+1. Can this Intent+Approach [green]succeed[-]?
+2. Can it [red]fail[-]?
+3. Does failure have [purple::b]meaningful consequences[-:-:-]?
+
+If any answers are no, simple narration or discussion will do. If, [purple::b]only if[-], all three answers are yes, [purple::b]test[-:-:-].
+
+["characters"]Characters
+
+["magic"]Magic
+
+["ftl"]Traveling in GlitchSpace
+
+["items"]Items
