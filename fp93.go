@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
+
+	_ "embed"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -13,35 +14,39 @@ import (
 var (
 	appTitle      string = `[green]FloppyPunk`
 	appHeaderText string = `[yellow::b]Traversing GlitchSpace in Relative Safety and Style since '93`
-	asciiFloppy   string = `
-	,'";-------------------;"'.
-	;[]; ................. ;[];
-	;  ; ................. ;  ;
-	;  ; ................. ;  ;
-	;  ; ................. ;  ;
-	;  ; ................. ;  ;
-	;  ; ................. ;  ;
-	;  ; ................. ;  ;
-	;  '.                 ,'  ;
-	;    """""""""""""""""    ;
-	;    ,-------------.---.  ;
-	;    ;  ;"";       ;   ;  ;
-	;    ;  ;  ;       ;   ;  ;
-	;    ;  ;  ;       ;   ;  ;
-	;//||;  ;  ;       ;   ;||;
-	;\\||;  ;__;       ;   ;\/;
-	'. _;          _  ;  _;  ;
-	" """"""""""" """"" """
 
-	Welcome to FloppyPunk
+	//go:embed loading.txt
+	asciiFloppy string
+	//go:embed landing.txt
+	landingBodyText string
+	//go:embed rules.txt
+	rulesRaw string
 
-	[yellow]Press Enter to continue
-`
-	landingBodyText string = `
-	In the near retrofuture, the GlitchSpace has revolutionized every field of human endeavor, enabling FTL travel, magic, esoteric mecha, and bringing transdimensional beings into our everyday lives.
+	app   = tview.NewApplication()
+	pages = tview.NewPages()
 
-	Among the vast stars and the less-than-empty night, millions of people make their living and try to stay one step ahead of the breakdown of reality.
-`
+	mainMenu = tview.NewList().
+			AddItem("Home", "Return to start", 'h', func() {
+			contentPages.SwitchToPage("intro")
+			//app.SetFocus(introText)
+			//fmt.Printf("now %v has focus", app.GetFocus())
+		}).
+		AddItem("Rules", "Read the rules", 'r', func() {
+			contentPages.SwitchToPage("rules")
+			//app.SetFocus(rulesText)
+			//fmt.Printf("now %v has focus", app.GetFocus())
+		}).
+		AddItem("Create Character", "Create & save a PC", 'c', nil).
+		AddItem("Load Character", "Load a saved PC", 'l', nil).
+		AddItem("Quit", "Press to exit", 'q', func() { app.Stop() })
+
+	introText    = newIntroText()
+	rulesText    = newRulesText(rulesRaw)
+	contentPages = tview.NewPages().
+			AddPage("intro", introText, true, true).
+			AddPage("rules", rulesText, true, false)
+
+	mainPages = newContentPage(contentPages)
 )
 
 // Shorthand function for error handling
@@ -50,10 +55,6 @@ func check(e error) {
 		panic(e)
 	}
 }
-
-// Instantiate the application and pages so they're available across functions
-var app = tview.NewApplication()
-var pages = tview.NewPages()
 
 // Set the header for the app
 func newFPHeader(title string, text string) tview.Primitive {
@@ -78,11 +79,7 @@ func newIntroText() tview.Primitive {
 	return landingBody
 }
 
-var introText = newIntroText()
-
-func newRulesText(path string) tview.Primitive {
-	rulesText, err := ioutil.ReadFile(path)
-	check(err)
+func newRulesText(rulesText string) tview.Primitive {
 	rulesBody := tview.NewTextView().
 		SetWordWrap(true).
 		SetDynamicColors(true).
@@ -94,22 +91,6 @@ func newRulesText(path string) tview.Primitive {
 		SetTitle("[green]Rules")
 	return rulesBody
 }
-
-var rulesText = newRulesText("./rules.txt")
-
-// The main menu controls
-var mainMenu = tview.NewList().
-	AddItem("Home", "Return to start", 'h', func() {
-		pages.SwitchToPage("main")
-		app.SetFocus(introText)
-	}).
-	AddItem("Rules", "Read the rules", 'r', func() {
-		pages.SwitchToPage("rules")
-		app.SetFocus(rulesText)
-	}).
-	AddItem("Create Character", "Create & save a PC", 'c', nil).
-	AddItem("Load Character", "Load a saved PC", 'l', nil).
-	AddItem("Quit", "Press to exit", 'q', func() { app.Stop() })
 
 func newFPMainMenu(menu tview.Primitive) tview.Primitive {
 	mainMenu := tview.NewFlex().AddItem(menu, 0, 1, false)
@@ -176,12 +157,7 @@ func newContentPage(body tview.Primitive) tview.Primitive {
 func main() {
 	frontText, frontFlex := newLoadingPage(mainMenu)
 	pages.AddPage("front", frontFlex, true, true)
-	pages.AddPage("main", newContentPage(introText), true, false).Focus(func(p tview.Primitive) {
-		app.SetFocus(mainMenu)
-	})
-	pages.AddPage("rules", newContentPage(rulesText), true, false).Focus(func(p tview.Primitive) {
-		app.SetFocus(mainMenu)
-	})
+	pages.AddPage("main", mainPages, true, false)
 
 	if err := app.SetRoot(pages, true).SetFocus(frontText).EnableMouse(true).Run(); err != nil {
 		panic(err)
